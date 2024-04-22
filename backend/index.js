@@ -26,17 +26,13 @@ mongoose.connect('mongodb://localhost:27017/state', {
     console.error('Error al conectar a MongoDB:', err);
   });
 
-const badgeSchema = new mongoose.Schema({
-  value: String,
-  // Agrega aquí otros campos que necesites
+// Definir el esquema de datos para las colecciones de usuarios
+const userSchema = new mongoose.Schema({
+  email: String
 });
 
-const imgSchema = new mongoose.Schema({
-  value: String,
-  // Agrega aquí otros campos que necesites
-});
-
-// Definir el esquema de datos
+// Crear un modelo basado en el esquema
+const User = mongoose.model('User', userSchema);
 const dataSchema = new mongoose.Schema({
   img: [String],
   name: String,
@@ -44,14 +40,26 @@ const dataSchema = new mongoose.Schema({
   framework: String,
   getBadges: Object
 });
-
-// Crear un modelo basado en el esquema
-const Data = mongoose.model('Data', dataSchema, 'state');
-
 // Definir la ruta POST para guardar datos
 app.post('/data', async (req, res) => {
   try {
-    console.log(req.body)
+    const userEmail = req.headers['email']; // Obtener el correo electrónico del encabezado de la petición
+    if (!userEmail) {
+      return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
+    }
+    
+    // Verificar si el usuario ya existe en la base de datos
+    let user = await User.findOne({ email: userEmail });
+    if (!user) {
+      // Si el usuario no existe, crear uno nuevo
+      user = await User.create({ email: userEmail });
+    }
+
+    // Crear una colección con el nombre del correo electrónico del usuario
+    const collectionName = userEmail.replace('@', '_').replace('.', '_'); // Reemplazar caracteres especiales para el nombre de la colección
+    const Data = mongoose.model(collectionName, dataSchema);
+
+    // Agregar los datos recibidos al objeto "data" en la colección correspondiente
     const newData = await Data.create(req.body);
     res.status(201).json(newData);
   } catch (error) {
@@ -63,6 +71,20 @@ app.post('/data', async (req, res) => {
 // Definir la ruta GET para obtener todos los datos de la colección 'state'
 app.get('/api/data', async (req, res) => {
   try {
+    const data = await Data.find();
+    res.json(data);
+  } catch (err) {
+    console.error('Error al obtener los datos:', err);
+    res.status(500).json({ error: 'Error al obtener los datos' });
+  }
+});
+// Definir la ruta GET para obtener todos los datos de una colección específica
+app.get('/data/:collectionName', async (req, res) => {
+  try {
+    const collectionName = req.params.collectionName; // Obtener el nombre de la colección de los parámetros de la ruta
+    const Data = mongoose.model(collectionName, dataSchema);
+
+    // Buscar todos los datos en la colección específica
     const data = await Data.find();
     res.json(data);
   } catch (err) {

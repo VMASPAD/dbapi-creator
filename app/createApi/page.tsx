@@ -79,12 +79,13 @@ export default function CreateApi() {
       getFramework: getFramework,
       getBadges: getBadges,
     };
-  console.log(data)
+    console.log(data)
     try {
       const response = await fetch('http://localhost:2000/data', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'email': 'tomaseavila@gmail.com' // Aquí puedes cambiar por el correo electrónico del usuario
         },
         body: JSON.stringify(data)
       });
