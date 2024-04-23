@@ -18,12 +18,16 @@ export default function Home() {
   const [email, setEmail] = React.useState('');
   const router = useRouter();
 
+  React.useEffect(() => {
+    const emailInput = document.getElementById('email').value;
+    
+  }, []);
   const handleLogin = async (e) => {
     e.preventDefault();
 
     const emailInput = document.getElementById('email').value;
     const passwordInput = document.getElementById('password').value;
-
+    localStorage.setItem("emailtemp",emailInput)
     try {
       const response = await fetch('http://localhost:2000/api/auth/login', {
         method: 'POST',
@@ -36,6 +40,7 @@ export default function Home() {
       const data = await response.json();
 
       if (response.ok) {
+
         setEmail(data.email);
         router.push('/dashboard');
       } else {
@@ -58,14 +63,14 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: emailInput, password: passwordInput }),
+        body: JSON.stringify({ email: emailInput, pass: passwordInput }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setEmail(data.email);
-        router.push('/dashboard');
+        router.push('/createDb');
       } else {
         console.error('Error al registrar:', data.error);
       }
