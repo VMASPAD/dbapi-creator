@@ -30,10 +30,8 @@ mongoose.connect('mongodb://localhost:27017/dbapi', {
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true },
   pass: { type: String, required: true },
-  data: []
+  data: {}
 });
-
-// Crear un modelo basado en el esquema
 const User = mongoose.model('User', userSchema);
 
 // Definir la ruta POST para registrar un nuevo usuario
@@ -80,26 +78,36 @@ app.post('/api/auth/login', async (req, res) => {
 // Definir la ruta POST para agregar un nuevo array dentro de "data"
 app.post('/api/data/add-array', async (req, res) => {
   try {
-    const userEmail = req.headers['email']; // Obtener el correo electrónico del encabezado de la petición
+    const userEmail = req.headers['email'];
     if (!userEmail) {
       return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
     }
 
-    // Verificar si el usuario existe en la base de datos
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    // Obtener el nombre del nuevo array desde los parámetros de la solicitud
     const { arrayName } = req.body;
     if (!arrayName) {
       return res.status(400).json({ error: 'No se proporcionó el nombre del array' });
     }
 
-    // Agregar el nuevo array al objeto "data" del usuario
-    user.data[arrayName] = [];
+    console.log(arrayName);
+
+    // Verificar si el array ya existe en el objeto `data`
+    if (user.data.hasOwnProperty(arrayName)) {
+      return res.status(400).json({ error: `El array "${arrayName}" ya existe` });
+    }
+
+    // Crear un nuevo objeto `data` con los datos anteriores y el nuevo array
+    const newData = { ...user.data, [arrayName]: [] };
+
+    // Actualizar el objeto `data` del usuario
+    user.data = newData;
+
     await user.save();
+    console.log(user);
 
     res.status(201).json({ message: `Nuevo array "${arrayName}" agregado correctamente` });
   } catch (error) {
@@ -107,7 +115,25 @@ app.post('/api/data/add-array', async (req, res) => {
     res.status(500).json({ error: 'Error al agregar array' });
   }
 });
+// Ruta para obtener los datos del usuario
+app.get('/api/user-data', async (req, res) => {
+  try {
+    const userEmail = req.headers['email'];
+    if (!userEmail) {
+      return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
+    }
 
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error al obtener los datos del usuario:', error);
+    res.status(500).json({ error: 'Error al obtener los datos del usuario' });
+  }
+});
 // Iniciar el servidor
 const PORT = 2000;
 app.listen(PORT, () => {

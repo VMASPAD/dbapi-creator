@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -57,15 +58,16 @@ import { AddBadges } from "../components/AddBadges";
 export default function CreateApi() {
   const [badge, setBadge] = React.useState([]);
   const [imageData, setImageData] = React.useState([]);
+  const [userData, setUserData] = React.useState(null);
 
   React.useEffect(() => {
     const getBadges = JSON.parse(localStorage.getItem("types"));
     console.log(getBadges);
     setBadge(getBadges);
+    getUserData()
   }, []);
   const handleData = (data) => {
     console.log(data);
-    setImageData(data);
   };
   const getAllData = async () => {
     const name = document.getElementById("name").value;
@@ -81,7 +83,7 @@ export default function CreateApi() {
     };
     console.log(data)
     try {
-      const response = await fetch('http://localhost:2000/data', {
+      const response = await fetch('http://localhost:2000/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +101,40 @@ export default function CreateApi() {
       console.error('Error al enviar la solicitud:', error);
     }
   };
+  const getUserData = async () => {
+    try {
+      const response = await fetch('http://localhost:2000/api/user-data', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'email': 'tomaseavila@gmail.com' // Aquí puedes cambiar por el correo electrónico del usuario
+        }
+      });
   
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('Datos del usuario:', userData);
+  
+        // Mostrar las matrices de datos
+        if (userData.data) {
+          const dataArrays = Object.entries(userData.data);
+          setUserData(userData.data)
+          console.log('Matrices de datos:');
+          dataArrays.forEach(([key, value]) => {
+            console.log(`${key}: ${value}`);
+          });
+          setUserData(userData);
+          console.log(userData.data)
+        } else {
+          console.log('No se encontraron matrices de datos');
+        }
+      } else {
+        console.error('Error al obtener los datos del usuario');
+      }
+    } catch (error) {
+      console.error('Error al enviar la solicitud:', error);
+    }
+  };
   return (
     <Card className="w-[350px]">
       <CardHeader>
@@ -122,7 +157,16 @@ export default function CreateApi() {
                 <SelectTrigger id="framework">
                   <SelectValue placeholder="Select api to add" />
                 </SelectTrigger>
-                <SelectContent position="popper"></SelectContent>
+                <SelectContent>
+        <SelectGroup>
+                  {userData && userData.data && Object.entries(userData.data).map(([key, value]) => (
+                    
+                    <SelectItem key={key} value={key}>
+                      {key}
+                    </SelectItem>
+                  ))}
+                          </SelectGroup>
+      </SelectContent>
               </Select>
             </div>
           </div>

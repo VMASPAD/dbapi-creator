@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useRouter } from 'next/navigation';
 
 function CreateDb() {
   const [email, setEmail] = React.useState("");
-  const [arrayName, setArrayName] = React.useState(""); // Nuevo estado para almacenar el nombre del array
+  const [arrayName, setArrayName] = React.useState("");// Nuevo estado para almacenar el nombre del array
+  const router = useRouter(); 
 
   React.useEffect(() => {
     const email = JSON.stringify(localStorage.getItem("emailtemp"));
@@ -27,12 +29,15 @@ function CreateDb() {
       const response = await fetch("http://localhost:2000/api/data/add-array", {
         method: "POST",
         headers: {
-          email: email, // Enviar el correo electrónico en el encabezado de la petición
+          "Content-Type": "application/json",
+          email: 'tomaseavila@gmail.com', // Enviar el correo electrónico en el encabezado de la petición
         },
-        body: JSON.stringify({ arrayName }), // Enviar el nombre del array en el cuerpo de la petición
+        body: JSON.stringify({ arrayName }), // Enviar el nombre del array en el cuerpo de la petición como un objeto JSON
       });
+      console.log(response)
       if (response.ok) {
         console.log("Nuevo array creado correctamente");
+        router.push('/createApi');
       } else {
         console.error("Error al crear el nuevo array");
       }
