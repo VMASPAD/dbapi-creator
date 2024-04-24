@@ -20,6 +20,7 @@ export default function Home() {
 
   React.useEffect(() => {
     const emailInput = document.getElementById('email').value;
+    localStorage.setItem("emailtemp",emailInput)
     
   }, []);
   const handleLogin = async (e) => {
@@ -27,6 +28,7 @@ export default function Home() {
 
     const emailInput = document.getElementById('email').value;
     const passwordInput = document.getElementById('password').value;
+    localStorage.removeItem("emailtemp")
     localStorage.setItem("emailtemp",emailInput)
     try {
       const response = await fetch('http://localhost:2000/api/auth/login', {
@@ -34,7 +36,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: emailInput, password: passwordInput }),
+        body: JSON.stringify({ email: emailInput, pass: passwordInput }),
       });
 
       const data = await response.json();
@@ -56,6 +58,8 @@ export default function Home() {
 
     const emailInput = document.getElementById('email').value;
     const passwordInput = document.getElementById('password').value;
+    localStorage.removeItem("emailtemp")
+    localStorage.setItem("emailtemp",emailInput)
 
     try {
       const response = await fetch('http://localhost:2000/api/auth/register', {
@@ -63,7 +67,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: emailInput, pass: passwordInput }),
+        body: JSON.stringify({ email: emailInput, pass: passwordInput, data: {"test":[{}]} }),
       });
 
       const data = await response.json();

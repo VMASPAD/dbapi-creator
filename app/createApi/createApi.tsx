@@ -55,84 +55,92 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { AddBadges } from "../components/AddBadges";
 
-export default function CreateApi() {
+export default function CreateApi({email}) {
   const [badge, setBadge] = React.useState([]);
   const [imageData, setImageData] = React.useState([]);
   const [userData, setUserData] = React.useState(null);
+  const [selectedValue, setSelectedValue] = React.useState("");
 
   React.useEffect(() => {
     const getBadges = JSON.parse(localStorage.getItem("types"));
     console.log(getBadges);
+    const email = localStorage.getItem("emailtemp");
     setBadge(getBadges);
-    getUserData()
+    getUserData(email);
+    console.log(email)
   }, []);
   const handleData = (data) => {
+    setImageData(data)
     console.log(data);
+  };
+
+  const handleSelectChange = (value) => {
+    setSelectedValue(value);
   };
   const getAllData = async () => {
     const name = document.getElementById("name").value;
     const description = document.getElementById("description").value;
-    const getFramework = document.getElementById("framework").value;
     const getBadges = JSON.parse(localStorage.getItem("types"));
     const data = {
-      img: imageData,
+      img: await imageData,
       name: name,
       description: description,
-      getFramework: getFramework,
+      getFramework: selectedValue,
       getBadges: getBadges,
     };
-    console.log(data)
+    console.log(data);
     try {
-      const response = await fetch('http://localhost:2000/api/products', {
-        method: 'POST',
+      const response = await fetch("http://localhost:2000/api/data/content-array", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'email': 'tomaseavila@gmail.com' // Aquí puedes cambiar por el correo electrónico del usuario
+          "Content-Type": "application/json",
+          email: `${email}`, // Aquí puedes cambiar por el correo electrónico del usuario
+          framework: `${selectedValue}` // Nombre del framework al que se agregará el contenido
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data), // El contenido a agregar se envía en el cuerpo de la solicitud
       });
   
       if (response.ok) {
-        console.log('Datos guardados correctamente');
+        console.log("Datos guardados correctamente");
       } else {
-        console.error('Error al guardar los datos');
+        console.error("Error al guardar los datos",);
       }
     } catch (error) {
-      console.error('Error al enviar la solicitud:', error);
+      console.error("Error al enviar la solicitud:", error);
     }
   };
-  const getUserData = async () => {
+  const getUserData = async (emailUser) => {
     try {
-      const response = await fetch('http://localhost:2000/api/user-data', {
-        method: 'GET',
+      const response = await fetch("http://localhost:2000/api/user-data", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'email': 'tomaseavila@gmail.com' // Aquí puedes cambiar por el correo electrónico del usuario
-        }
+          "Content-Type": "application/json",
+          email: await `${emailUser}`, // Aquí puedes cambiar por el correo electrónico del usuario
+        },
       });
-  
+
       if (response.ok) {
         const userData = await response.json();
-        console.log('Datos del usuario:', userData);
-  
+        console.log("Datos del usuario:", userData);
+
         // Mostrar las matrices de datos
         if (userData.data) {
           const dataArrays = Object.entries(userData.data);
-          setUserData(userData.data)
-          console.log('Matrices de datos:');
+          setUserData(userData.data);
+          console.log("Matrices de datos:");
           dataArrays.forEach(([key, value]) => {
             console.log(`${key}: ${value}`);
           });
           setUserData(userData);
-          console.log(userData.data)
+          console.log(userData.data);
         } else {
-          console.log('No se encontraron matrices de datos');
+          console.log("No se encontraron matrices de datos");
         }
       } else {
-        console.error('Error al obtener los datos del usuario');
+        console.error("Error al obtener los datos del usuario");
       }
     } catch (error) {
-      console.error('Error al enviar la solicitud:', error);
+      console.error("Error al enviar la solicitud:", error);
     }
   };
   return (
@@ -142,7 +150,7 @@ export default function CreateApi() {
         <CardDescription>Add Product to your API.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ImageUploader handleData={handleData}/>
+        <ImageUploader handleData={handleData} />
         <form>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
@@ -153,20 +161,21 @@ export default function CreateApi() {
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="framework">Framework</Label>
-              <Select>
-                <SelectTrigger id="framework">
+              <Select value={selectedValue} onValueChange={handleSelectChange}>
+                <SelectTrigger >
                   <SelectValue placeholder="Select api to add" />
                 </SelectTrigger>
                 <SelectContent>
-        <SelectGroup>
-                  {userData && userData.data && Object.entries(userData.data).map(([key, value]) => (
-                    
-                    <SelectItem key={key} value={key}>
-                      {key}
-                    </SelectItem>
-                  ))}
-                          </SelectGroup>
-      </SelectContent>
+                  <SelectGroup>
+                    {userData &&
+                      userData.data &&
+                      Object.entries(userData.data).map(([key, value]) => (
+                        <SelectItem key={key} value={key}>
+                          {key}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </SelectContent>
               </Select>
             </div>
           </div>
@@ -266,7 +275,12 @@ const ImageUploader = ({ handleData }) => {
   };
   return (
     <div>
-      <Input type="file" accept="image/*" multiple onChange={handleImageChange} />
+      <Input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleImageChange}
+      />
       <div>
         <>
           <Carousel className="w-full max-w-xs">
@@ -291,6 +305,5 @@ const ImageUploader = ({ handleData }) => {
     </div>
   );
 };
-
 
 export { ImageUploader };

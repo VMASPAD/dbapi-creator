@@ -19,7 +19,7 @@ function CreateDb() {
   const router = useRouter(); 
 
   React.useEffect(() => {
-    const email = JSON.stringify(localStorage.getItem("emailtemp"));
+    const email = localStorage.getItem("emailtemp")
     setEmail(email);
   }, []);
 
@@ -30,14 +30,14 @@ function CreateDb() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          email: 'tomaseavila@gmail.com', // Enviar el correo electrónico en el encabezado de la petición
+          email: email, // Enviar el correo electrónico en el encabezado de la petición
         },
         body: JSON.stringify({ arrayName }), // Enviar el nombre del array en el cuerpo de la petición como un objeto JSON
       });
       console.log(response)
       if (response.ok) {
         console.log("Nuevo array creado correctamente");
-        router.push('/createApi');
+        router.push('/dashboard');
       } else {
         console.error("Error al crear el nuevo array");
       }

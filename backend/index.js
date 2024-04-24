@@ -10,6 +10,7 @@ const users = [];
 // Configurar body-parser para analizar las solicitudes JSON
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json());
 
 // Habilitar CORS
 app.use(cors());
@@ -45,8 +46,11 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'El correo electrónico ya está registrado' });
     }
 
+    // Inicializar data como un objeto vacío si no se proporciona ningún dato
+    const userData = data ? data : {};
+
     // Crear un nuevo usuario y guardarlo en la base de datos
-    const newUser = new User({ email, pass, data });
+    const newUser = new User({ email, pass, data: userData });
     await newUser.save();
 
     // Enviar los datos del usuario registrado como respuesta
@@ -56,6 +60,7 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(500).json({ error: 'Error al registrar usuario' });
   }
 });
+
 
 // Definir la ruta POST para iniciar sesión
 app.post('/api/auth/login', async (req, res) => {
@@ -82,7 +87,6 @@ app.post('/api/data/add-array', async (req, res) => {
     if (!userEmail) {
       return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
     }
-
     const user = await User.findOne({ email: userEmail });
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -134,6 +138,64 @@ app.get('/api/user-data', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener los datos del usuario' });
   }
 });
+app.post('/api/data/content-array', async (req, res) => {
+  try {
+    const userEmail = req.headers['email'];
+    const userFramework = req.headers['framework'];
+    if (!userEmail) {
+      return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
+    }
+
+    // Verificar si el framework existe en el objeto `data`
+    if (!req.body || !req.body.img || !req.body.name || !req.body.description || !req.body.getBadges || !req.body.getFramework) {
+      return res.status(400).json({ error: 'Datos insuficientes para agregar contenido' });
+    }
+console.log(req.body)
+    // Actualizar el documento de usuario directamente en la base de datos
+    const updatedUser = await User.findOneAndUpdate(
+      { email: userEmail },
+      { $push: { [`data.${userFramework}`]: req.body } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    console.log(updatedUser.data[userFramework]);
+
+    res.status(201).json({ message: `Contenido agregado correctamente al framework "${userFramework}"` });
+  } catch (error) {
+    console.error('Error al agregar contenido:', error);
+    res.status(500).json({ error: 'Error al agregar contenido' });
+  }
+});
+app.get('/api/user', async (req, res) => {
+  try {
+    const userEmail = req.headers['email'];
+    const userPass = req.headers['pass'];
+    const userId = req.headers['id'];
+
+    if (!userEmail || !userPass || !userId) {
+      return res.status(400).json({ error: 'No se proporcionaron las credenciales necesarias' });
+    }
+
+    // Buscar el usuario en la base de datos usando las credenciales proporcionadas
+    const user = await User.findOne({ email: userEmail, pass: userPass, _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Devolver el usuario encontrado en la respuesta
+    res.json(user);
+  } catch (err) {
+    console.error('Error al buscar el usuario:', err);
+    res.status(500).json({ error: 'Error al buscar el usuario' });
+  }
+});
+
+
+
 // Iniciar el servidor
 const PORT = 2000;
 app.listen(PORT, () => {
