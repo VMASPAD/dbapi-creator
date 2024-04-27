@@ -67,7 +67,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: emailInput, pass: passwordInput, data: {"test":[{}]} }),
+        body: JSON.stringify({ email: emailInput, pass: passwordInput, data: {"t":[]} }),
       });
 
       const data = await response.json();

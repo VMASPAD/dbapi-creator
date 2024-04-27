@@ -40,16 +40,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,11 +67,19 @@ export default function CreateApi({email}) {
   const handleSelectChange = (value) => {
     setSelectedValue(value);
   };
+  function* idGenerator() {
+    let id = 1;
+    while (true) {
+      yield id++;
+    }
+  }
   const getAllData = async () => {
+    const generateID = idGenerator();
     const name = document.getElementById("name").value;
     const description = document.getElementById("description").value;
     const getBadges = JSON.parse(localStorage.getItem("types"));
     const data = {
+      idData: generateID.next().value,
       img: await imageData,
       name: name,
       description: description,
@@ -125,14 +123,7 @@ export default function CreateApi({email}) {
 
         // Mostrar las matrices de datos
         if (userData.data) {
-          const dataArrays = Object.entries(userData.data);
           setUserData(userData.data);
-          console.log("Matrices de datos:");
-          dataArrays.forEach(([key, value]) => {
-            console.log(`${key}: ${value}`);
-          });
-          setUserData(userData);
-          console.log(userData.data);
         } else {
           console.log("No se encontraron matrices de datos");
         }
@@ -146,7 +137,7 @@ export default function CreateApi({email}) {
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Create Product</CardTitle>
+        <CardTitle>Create Product, {email}</CardTitle>
         <CardDescription>Add Product to your API.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -193,44 +184,6 @@ export default function CreateApi({email}) {
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button onClick={getAllData}>Create</Button>
-        <Drawer>
-          <DrawerTrigger>
-            <Button variant={"ghost"}>New</Button>
-          </DrawerTrigger>
-          <DrawerContent>
-            <DrawerHeader>
-              <DrawerTitle>Your Products</DrawerTitle>
-              <DrawerDescription>List.</DrawerDescription>
-              <div className="grid justify-items-center">
-                <Carousel className="w-full max-w-xs">
-                  <CarouselContent>
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <CarouselItem key={index}>
-                        <div className="p-1">
-                          <Card>
-                            <CardContent className="flex aspect-square items-center justify-center p-6">
-                              <span className="text-4xl font-semibold">
-                                {index + 1}
-                              </span>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
-                </Carousel>
-              </div>
-            </DrawerHeader>
-            <DrawerFooter>
-              <Button>Submit</Button>
-              <DrawerClose>
-                <Button variant="outline">Cancel</Button>
-              </DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
 
         <AlertDialog>
           <AlertDialogTrigger>

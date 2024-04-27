@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Edit, Trash } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,10 @@ export function AddBadges() {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
   const [frameworks, setFrameworks] = React.useState([]);
+  const [editIndex, setEditIndex] = React.useState(-1);
+  const [editValue, setEditValue] = React.useState("");
+  const [editLabel, setEditLabel] = React.useState("");
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
 
   const { toast } = useToast();
 
@@ -47,25 +51,38 @@ export function AddBadges() {
     const nameBadge = document.getElementById("nameBadge").value;
     const valueBadge = document.getElementById("valueBadge").value;
 
-    // Obtener la matriz "types" actual del almacenamiento local o crear una nueva matriz vacía si aún no existe
     let types = JSON.parse(localStorage.getItem("types")) || [];
 
-    // Crear un nuevo objeto con los datos obtenidos de los campos nameBadge y valueBadge
     const newType = {
       value: valueBadge,
       label: nameBadge,
     };
 
-    // Agregar el nuevo objeto a la matriz "types"
     types.push(newType);
-
-    // Guardar la matriz actualizada en el almacenamiento local
     localStorage.setItem("types", JSON.stringify(types));
-
-    // Actualizar el estado de frameworks para reflejar los cambios en el localStorage
     setFrameworks(types);
+  };
 
-    console.log(types);
+  const editDataBadge = () => {
+    let types = JSON.parse(localStorage.getItem("types")) || [];
+
+    types[editIndex] = {
+      value: editValue,
+      label: editLabel,
+    };
+
+    localStorage.setItem("types", JSON.stringify(types));
+    setFrameworks(types);
+    setEditIndex(-1);
+    setEditValue("");
+    setEditLabel("");
+  };
+
+  const removeDataBadge = (index) => {
+    let types = JSON.parse(localStorage.getItem("types")) || [];
+    types.splice(index, 1);
+    localStorage.setItem("types", JSON.stringify(types));
+    setFrameworks(types);
   };
 
   return (
@@ -127,7 +144,7 @@ export function AddBadges() {
               </DialogContent>
             </Dialog>
             {frameworks.length > 0 ? (
-              frameworks.map((framework) => (
+              frameworks.map((framework, index) => (
                 <CommandItem
                   key={framework.value}
                   value={framework.value}
@@ -143,6 +160,20 @@ export function AddBadges() {
                     )}
                   />
                   {framework.label}
+                  <Edit
+  className="ml-2 h-4 w-4 cursor-pointer"
+  onClick={() => {
+    setEditIndex(index);
+    setEditValue(framework.value);
+    setEditLabel(framework.label);
+    setEditDialogOpen(true); // Abre el diálogo de edición
+  }}
+/>
+
+                  <Trash
+                    className="ml-2 h-4 w-4 cursor-pointer"
+                    onClick={() => removeDataBadge(index)}
+                  />
                 </CommandItem>
               ))
             ) : (
@@ -150,6 +181,54 @@ export function AddBadges() {
             )}
           </CommandGroup>
         </Command>
+        {editIndex !== -1 && (
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Edit Badge</DialogTitle>
+                <DialogDescription>Edit Badge</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editLabel" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="editLabel"
+                    className="col-span-3"
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editValue" className="text-right">
+                    Value
+                  </Label>
+                  <Input
+                    id="editValue"
+                    className="col-span-3"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  onClick={() => {
+                    editDataBadge();
+                    toast({
+                      title: "Badge Edited!",
+                      description: "Badge Edited Succesfully!",
+                    });
+                  }}
+                >
+                  Save changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </PopoverContent>
     </Popover>
   );

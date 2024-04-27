@@ -147,10 +147,9 @@ app.post('/api/data/content-array', async (req, res) => {
     }
 
     // Verificar si el framework existe en el objeto `data`
-    if (!req.body || !req.body.img || !req.body.name || !req.body.description || !req.body.getBadges || !req.body.getFramework) {
+    if (!req.body || !req.body.img || !req.body.name || !req.body.description || !req.body.getBadges || !req.body.getFramework || !req.body.idData) {
       return res.status(400).json({ error: 'Datos insuficientes para agregar contenido' });
     }
-console.log(req.body)
     // Actualizar el documento de usuario directamente en la base de datos
     const updatedUser = await User.findOneAndUpdate(
       { email: userEmail },
@@ -170,6 +169,7 @@ console.log(req.body)
     res.status(500).json({ error: 'Error al agregar contenido' });
   }
 });
+
 app.get('/api/user', async (req, res) => {
   try {
     const userEmail = req.headers['email'];
@@ -194,7 +194,52 @@ app.get('/api/user', async (req, res) => {
   }
 });
 
+app.put('/api/userdata', async (req, res) => {
+  try {
+    const userEmail = req.headers['email'];
+    const userPass = req.headers['pass'];
+    const userId = req.headers['id'];
+    const userFramework = req.headers['framework'];
+    const userName = req.headers['name'];
+    const userDescription = req.headers['description'];
+    const userIdData = parseInt(req.headers['iddata']);
+console.log(userIdData)
+    if (!userEmail || !userPass || !userId) {
+      return res.status(400).json({ error: 'No se proporcionaron las credenciales necesarias' });
+    }
 
+    // Buscar el usuario en la base de datos usando las credenciales proporcionadas
+    const user = await User.findOne({ email: userEmail, pass: userPass, _id: userId });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Buscar el objeto dentro de data que coincida con el userIdData proporcionado
+    const dataObject = Object.values(user.data).some(value => {
+      if (Array.isArray(value)) {
+        return value.some(obj => obj.iddata === userIdData);
+      } else if (typeof value === 'object' && value !== null) {
+        return Object.values(value).some(nestedValue => {
+          if (Array.isArray(nestedValue)) {
+            return nestedValue.some(obj => obj.iddata === userIdData);
+          }
+          return false;
+        });
+      }
+      return false;
+    });
+
+    if (dataObject) {
+      console.log(dataObject);
+    } else {
+      console.log('No se encontró ningún objeto con el iddata proporcionado');
+    }
+  } catch (err) {
+    console.error('Error al buscar y actualizar el usuario:', err);
+    res.status(500).json({ error: 'Error al buscar y actualizar el usuario' });
+  }
+});
 
 // Iniciar el servidor
 const PORT = 2000;
