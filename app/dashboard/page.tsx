@@ -72,12 +72,6 @@ function Dashboard() {
 
     fetchUserData();
   }, []);
-  function* idGenerator() {
-    let id = 1;
-    while (true) {
-      yield id++;
-    }
-  }
   const editDataApi = async () => {
       const email = localStorage.getItem("emailtemp");
       const itemName = document.getElementById("itemName").value
@@ -185,13 +179,13 @@ console.log(response)
                                                       <br />
                                                       <Label key={item.description}>
                                                         Descripción:
-                                                        {item.getFramework}
+                                                        {item.description}
                                                       </Label>
                                                       <Input placeholder={item.description} key={item.description} id="itemDescription"/>
                                                       <br />
-                                                      <Label key={item.idData}>
+                                                      <Label key={item.iddata}>
                                                       idData:
-                                                        {item.idData}
+                                                        {item.iddata}
                                                       </Label>
                                                       <br />
                                                       <p>
