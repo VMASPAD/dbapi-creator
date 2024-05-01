@@ -28,88 +28,73 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import CreateApi from "../createApi/createApi";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { getUserData } from "./getUserData";
+import { putUserEdit } from "./putUserEdit";
+import SelectWrapper from "./SelectWrapper";
 
 function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState(null);
-  const [apiData, setApiData] = useState([]);
-  const [dataemail, setDataEmail] = React.useState("");
-  const [selectedObject, setSelectedObject] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [apiData, setApiData] = useState(null);
+  let selectToChange = ''
 
-  React.useEffect(() => {}, []);
+  const fetchData = async () => {
+    try {
+      const userDataResponse = await getUserData("vmcodeta@gmail.com");
+      setUserData(userDataResponse);
+      setApiData(userDataResponse);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
-    // Hacer la solicitud al backend para obtener el usuario por su correo electrónico
-    const fetchUserData = async () => {
-      const email = localStorage.getItem("emailtemp");
-      try {
-        const response = await fetch("http://localhost:2000/api/user-data", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            email: `${email}`, // Reemplaza con el correo electrónico real del usuario
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log(data);
-          setApiData(data);
-          setUserData(data);
-          setIsLoading(false);
-        } else {
-          console.error("Error al obtener los datos del usuario");
-        }
-      } catch (error) {
-        console.error("Error al enviar la solicitud:", error);
-      }
-    };
-
-    fetchUserData();
+    fetchData();
   }, []);
-  const editDataApi = async () => {
-      const email = localStorage.getItem("emailtemp");
-      const itemName = document.getElementById("itemName").value
-      const itemDescription = document.getElementById("itemDescription").value
-      try {
-        const response = await fetch("http://localhost:2000/api/userdata", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            email: `${email}`,
-            pass: `${userData?.pass}`,
-            id: `${userData?._id}`,
-            framework: `t`,
-            iddata: 1,
-            name: `${itemName}`,
-            description: `${itemDescription}`,
-          },
-        });
-console.log(response)
-        if (response.ok) {
-          const data = await response.json();
-          console.log(data)
-        } else {
-          console.error("Error al obtener los datos del usuario");
-        }
-      } catch (error) {
-        console.error("Error al enviar la solicitud:", error);
-      }
-  }
   
+  const handleSelectedValueChange = (newValue) => {
+    console.log("Nuevo valor seleccionado:", newValue);
+    selectToChange = newValue
+  };
+  const editDataApi = async () => {
+    console.log(selectToChange)
+    const email = localStorage.getItem("emailtemp");
+    const itemName = document.getElementById("itemName").value;
+    const itemDescription = document.getElementById("itemDescription").value;
+    const itemGetFramework = document.getElementById("itemGetFramework")?.textContent;
+    const itemIddata = document.getElementById("itemIddata")?.textContent
+    putUserEdit(
+      email,
+      userData?.pass,
+      userData?._id,
+      itemGetFramework,
+      selectToChange,
+      itemIddata,
+      itemName,
+      itemDescription
+    );
+  };
+
   return (
     <div>
       {userData && (
         <div>
           <h2>User Data</h2>
-          <p>Email: {userData.email}</p>
-          <p>id: {userData._id}</p>
-          <p>{dataemail}</p>
+          <p>Email: {apiData.email}</p>
+          <p>id: {apiData._id}</p>
           <div>
             <Separator />
 
@@ -121,7 +106,6 @@ console.log(response)
           </div>
         </div>
       )}
-
       <Drawer>
         <DrawerTrigger>
           <Button variant={"ghost"}>View Apis</Button>
@@ -136,87 +120,154 @@ console.log(response)
                   {isLoading ? (
                     <div>Cargando...</div>
                   ) : userData ? (
-                    Object.entries(userData?.data).map(async ([apiName, apiData]) => (
-                      <CarouselItem key={apiName}>
-                        <div className="p-1">
-                          <Card>
-                            <CardContent className="flex aspect-square items-center justify-center p-6">
-                              <div
-                                key={apiName}
-                                className="flex flex-col gap-5 items-center"
-                              >
-                                <span className="text-4xl font-semibold">
-                                  {apiName}
-                                </span>
+                    Object.entries(userData?.data).map(
+                      async ([apiName, apiData]) => (
+                        <CarouselItem key={apiName}>
+                          <div className="p-1">
+                            <Card>
+                              <CardContent className="flex aspect-square items-center justify-center p-6">
+                                <div
+                                  key={apiName}
+                                  className="flex flex-col gap-5 items-center"
+                                >
+                                  <span className="text-4xl font-semibold">
+                                    {apiName}
+                                  </span>
 
-                                <Sheet>
-                                  <SheetTrigger>
-                                    <Button key={apiName}>
-                                      Editar: {apiName}
-                                    </Button>
-                                  </SheetTrigger>
-                                  <SheetContent>
-                                    <SheetHeader>
-                                      <SheetTitle>
-                                        Edita tus productos
-                                      </SheetTitle>
-                                      <SheetDescription>
-                                        <div className="flex flex-col gap-5">
-                                          {apiData.map((item, index) => (
-                                            <Sheet key={index}>
-                                              <SheetTrigger>
-                                                <Button>{item.name}</Button>
-                                              </SheetTrigger>
-                                              <SheetContent>
-                                                <SheetHeader>
-                                                  <SheetTitle>
-                                                    {item.name}
-                                                  </SheetTitle>
-                                                  <SheetDescription>
-                                                    <div>
-                                                      <Label key={item.name}>Name: {item.description}</Label>
-                                                      <Input placeholder={item.name} key={item.name} id="itemName"/>
-                                                      <br />
-                                                      <Label key={item.description}>
-                                                        Descripción:
-                                                        {item.description}
-                                                      </Label>
-                                                      <Input placeholder={item.description} key={item.description} id="itemDescription"/>
-                                                      <br />
-                                                      <Label key={item.iddata}>
-                                                      idData:
-                                                        {item.iddata}
-                                                      </Label>
-                                                      <br />
-                                                      <p>
-                                                        Badges:
-                                                        {item.getBadges.map(
-                                                          (badge, index) => (
-                                                            <Badge key={index}>
-                                                              {badge.label}
-                                                            </Badge>
-                                                          )
+                                  <Sheet>
+                                    <SheetTrigger>
+                                      <Button key={apiName}>
+                                        Editar: {apiName}
+                                      </Button>
+                                    </SheetTrigger>
+                                    <SheetContent>
+                                      <SheetHeader>
+                                        <SheetTitle>
+                                          Edita tus productos
+                                        </SheetTitle>
+                                        <SheetDescription>
+                                          <div className="flex flex-col gap-5">
+                                            {apiData.map((item, index) => (
+                                              <Sheet key={index}>
+                                                <SheetTrigger>
+                                                  <Button>{item.name}</Button>
+                                                </SheetTrigger>
+                                                <SheetContent>
+                                                  <SheetHeader>
+                                                    <SheetTitle>
+                                                      {item.name}
+                                                    </SheetTitle>
+                                                    <SheetDescription>
+                                                      <div>
+                                                        <Label key={item.name}>
+                                                          Name:{" "}
+                                                          {item.description}
+                                                        </Label>
+                                                        <Input
+                                                          placeholder={
+                                                            item.name
+                                                          }
+                                                          key={item.name}
+                                                          id="itemName"
+                                                        />
+                                                        <br />
+                                                        <Label
+                                                          key={item.description}
+                                                        >
+                                                          Descripción:
+                                                          {item.description}
+                                                        </Label>
+                                                        <Input
+                                                          placeholder={
+                                                            item.description
+                                                          }
+                                                          key={item.description}
+                                                          id="itemDescription"
+                                                        />
+                                                        <br />
+                                                        <Label
+                                                          key={item.iddata}
+                                                          id="itemIddata"
+                                                        >
+                                                          {item.idData}
+                                                        </Label>
+                                                        <br />
+                                                        <Label
+                                                          key={item.getFramework}
+                                                          id="itemGetFramework"
+                                                        >
+                                                          {item.getFramework}
+                                                        </Label>
+                                                        <br />
+                                                        <p>
+                                                          Badges:
+                                                          {item.getBadges.map(
+                                                            (badge, index) => (
+                                                              <Badge
+                                                                key={index}
+                                                              >
+                                                                {badge.label}
+                                                              </Badge>
+                                                            )
+                                                          )}
+                                                        </p>
+                                                        <SelectWrapper onSelectedValueChange={handleSelectedValueChange}>
+                                                        {({ selectedValue, handleSelectChange }) => (
+                                                        <Select
+                                                          value={selectedValue}
+                                                          onValueChange={
+                                                            handleSelectChange
+                                                          }
+                                                        >
+                                                          <SelectTrigger>
+                                                            <SelectValue placeholder="Select api to add" />
+                                                          </SelectTrigger>
+                                                          <SelectContent>
+                                                            <SelectGroup>
+                                                              {Object.entries(
+                                                                userData.data
+                                                              ).map(
+                                                                ([
+                                                                  key,
+                                                                  value,
+                                                                ]) => (
+                                                                  <SelectItem
+                                                                    key={key}
+                                                                    value={key}
+                                                                  >
+                                                                    {key}
+                                                                  </SelectItem>
+                                                                )
+                                                              )}
+                                                            </SelectGroup>
+                                                          </SelectContent>
+                                                        </Select>
                                                         )}
-                                                      </p>
-                                                    </div>
-                                                    <br />
-                                                    <Button onClick={editDataApi}>Cambiar</Button>
-                                                  </SheetDescription>
-                                                </SheetHeader>
-                                              </SheetContent>
-                                            </Sheet>
-                                          ))}
-                                        </div>
-                                      </SheetDescription>
-                                    </SheetHeader>
-                                  </SheetContent>
-                                </Sheet>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      </CarouselItem>
-                    ))
+                                                        </SelectWrapper>
+                                                      </div>
+                                                      <br />
+                                                      <Button
+                                                        onClick={editDataApi}
+                                                      >
+                                                        Cambiar
+                                                      </Button>
+                                                    </SheetDescription>
+                                                  </SheetHeader>
+                                                </SheetContent>
+                                              </Sheet>
+                                            ))}
+                                          </div>
+                                        </SheetDescription>
+                                      </SheetHeader>
+                                    </SheetContent>
+                                  </Sheet>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </CarouselItem>
+                      )
+                    )
                   ) : (
                     <div>No se pudo obtener los datos</div>
                   )}

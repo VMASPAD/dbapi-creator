@@ -196,50 +196,57 @@ app.get('/api/user', async (req, res) => {
 
 app.put('/api/userdata', async (req, res) => {
   try {
-    const userEmail = req.headers['email'];
-    const userPass = req.headers['pass'];
-    const userId = req.headers['id'];
-    const userFramework = req.headers['framework'];
-    const userName = req.headers['name'];
-    const userDescription = req.headers['description'];
-    const userIdData = parseInt(req.headers['iddata']);
-console.log(userIdData)
-    if (!userEmail || !userPass || !userId) {
+    const userEmail = req.body['email'];
+    const userPass = req.body['pass'];
+    const userId = req.body['id'];
+    const userIdData = req.body['iddata']
+    const userName = req.body['name'];
+    const userDescription = req.body['description'];
+    const userFramework = req.body['framework'];
+    const userOriginalFramework = req.body['originalFramework'];
+    console.log(req.body)
+    if (!userEmail || !userPass || !userId || !userIdData) {
       return res.status(400).json({ error: 'No se proporcionaron las credenciales necesarias' });
     }
 
-    // Buscar el usuario en la base de datos usando las credenciales proporcionadas
     const user = await User.findOne({ email: userEmail, pass: userPass, _id: userId });
 
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    // Buscar el objeto dentro de data que coincida con el userIdData proporcionado
-    const dataObject = Object.values(user.data).some(value => {
-      if (Array.isArray(value)) {
-        return value.some(obj => obj.iddata === userIdData);
-      } else if (typeof value === 'object' && value !== null) {
-        return Object.values(value).some(nestedValue => {
-          if (Array.isArray(nestedValue)) {
-            return nestedValue.some(obj => obj.iddata === userIdData);
-          }
-          return false;
-        });
-      }
-      return false;
-    });
+    // Buscar el índice del elemento en el objeto original
+    const objIndex = user.data[userOriginalFramework].findIndex(obj => obj.idData === userIdData);
 
-    if (dataObject) {
-      console.log(dataObject);
+    if (objIndex !== -1) {
+      // Eliminar el elemento del objeto original
+      const obj = user.data[userOriginalFramework].splice(objIndex, 1)[0];
+
+      // Actualizar el objeto encontrado con los nuevos valores de name y description
+      obj.name = userName;
+      obj.description = userDescription;
+      obj.getFramework = userFramework
+      // Agregar el elemento al nuevo objeto
+      user.data[userFramework].push(obj);
+
+      // Marcar el subdocumento como modificado
+      user.markModified(`data.${userOriginalFramework}`);
+      user.markModified(`data.${userFramework}`);
+
+      // Guardar los cambios en la base de datos
+      await user.save();
+      res.status(200).json({ message: 'Objeto actualizado y movido correctamente' });
     } else {
-      console.log('No se encontró ningún objeto con el iddata proporcionado');
+      res.status(404).json({ error: 'No se encontró ningún objeto con el iddata y framework proporcionados' });
     }
+
   } catch (err) {
-    console.error('Error al buscar y actualizar el usuario:', err);
-    res.status(500).json({ error: 'Error al buscar y actualizar el usuario' });
+    console.error('Error al buscar y actualizar el objeto:', err);
+    res.status(500).json({ error: 'Error al buscar y actualizar el objeto' });
   }
 });
+
+
 
 // Iniciar el servidor
 const PORT = 2000;

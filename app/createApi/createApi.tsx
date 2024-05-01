@@ -67,19 +67,20 @@ export default function CreateApi({email}) {
   const handleSelectChange = (value) => {
     setSelectedValue(value);
   };
-  function* idGenerator() {
-    let id = 1;
-    while (true) {
-      yield id++;
-    }
+  function generateUniqueId() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0,
+        v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
+  
   const getAllData = async () => {
-    const generateID = idGenerator();
     const name = document.getElementById("name").value;
     const description = document.getElementById("description").value;
     const getBadges = JSON.parse(localStorage.getItem("types"));
     const data = {
-      idData: generateID.next().value,
+      idData: generateUniqueId(),
       img: await imageData,
       name: name,
       description: description,
@@ -123,7 +124,7 @@ export default function CreateApi({email}) {
 
         // Mostrar las matrices de datos
         if (userData.data) {
-          setUserData(userData.data);
+          setUserData(userData);
         } else {
           console.log("No se encontraron matrices de datos");
         }
