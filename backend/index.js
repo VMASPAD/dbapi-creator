@@ -142,6 +142,7 @@ app.post('/api/data/content-array', async (req, res) => {
   try {
     const userEmail = req.headers['email'];
     const userFramework = req.headers['framework'];
+    console.log(req.headers)
     if (!userEmail) {
       return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
     }

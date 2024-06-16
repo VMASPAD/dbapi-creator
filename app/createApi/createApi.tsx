@@ -136,13 +136,16 @@ export default function CreateApi({email}) {
     }
   };
   return (
-    <Card className="w-[350px]">
+    <section className="flex flex-col justify-center items-center">
+
+<Card className="w-[350px]">
       <CardHeader>
         <CardTitle>Create Product, {email}</CardTitle>
         <CardDescription>Add Product to your API.</CardDescription>
       </CardHeader>
       <CardContent>
         <ImageUploader handleData={handleData} />
+        <br></br>
         <form>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
@@ -207,6 +210,7 @@ export default function CreateApi({email}) {
         </AlertDialog>
       </CardFooter>
     </Card>
+    </section>
   );
 }
 

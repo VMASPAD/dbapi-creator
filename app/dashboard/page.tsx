@@ -52,7 +52,8 @@ function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const userDataResponse = await getUserData("vmcodeta@gmail.com");
+      const email = localStorage.getItem("emailtemp")
+      const userDataResponse = await getUserData(email);
       setUserData(userDataResponse);
       setApiData(userDataResponse);
       setIsLoading(false);
@@ -89,23 +90,12 @@ function Dashboard() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col justify-center items-center">
       {userData && (
-        <div>
-          <h2>User Data</h2>
+        <><div className="grid grid-cols-3 justify-center justify-items-center">
           <p>Email: {apiData.email}</p>
           <p>id: {apiData._id}</p>
-          <div>
-            <Separator />
-
-            <h2>User Data:</h2>
-            <p>Email: {apiData.email}</p>
-            <p>Password: {apiData.pass}</p>
-            <h3>Data:</h3>
-            <ul></ul>
-          </div>
-        </div>
-      )}
+          
       <Drawer>
         <DrawerTrigger>
           <Button variant={"ghost"}>View Apis</Button>
@@ -286,6 +276,9 @@ function Dashboard() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+        </div><Separator /></>
+      )}
+      <br />
       <CreateApi email={userData?.email} />
     </div>
   );
