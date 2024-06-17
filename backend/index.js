@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-// Crear una aplicación de Express
 const app = express();
 const users = [];
 // Configurar body-parser para analizar las solicitudes JSON
