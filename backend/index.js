@@ -246,7 +246,54 @@ app.put('/api/userdata', async (req, res) => {
   }
 });
 
+app.put('/api/changeApiDb', async (req, res) => {
+  try {
+    const userEmail = req.headers['email'];
+    const userId = req.headers['id'];
+    const oldKey = req.headers['oldkey'];
+    const newKey = req.headers['newkey'];
 
+    if (!userEmail || !userId || !oldKey || !newKey) {
+      return res.status(400).json({ error: 'No se proporcionaron todos los datos necesarios' });
+    }
+
+    // Validar que el ID sea un ObjectId válido
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'ID de usuario no válido' });
+    }
+
+    // Buscar el usuario en la base de datos usando las credenciales proporcionadas
+    const user = await User.findOne({ email: userEmail, _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Verificar si la clave antigua existe en el objeto data
+    if (!user.data || !user.data.hasOwnProperty(oldKey)) {
+      return res.status(404).json({ error: 'La clave especificada no existe en los datos del usuario' });
+    }
+
+    // Crear un nuevo objeto con la clave actualizada
+    const updatedData = {};
+    for (let key in user.data) {
+      if (key === oldKey) {
+        updatedData[newKey] = user.data[key];
+      } else {
+        updatedData[key] = user.data[key];
+      }
+    }
+
+    // Actualizar el objeto data del usuario
+    user.data = updatedData;
+    await user.save();
+
+    // Devolver el usuario actualizado en la respuesta
+    res.json({ message: 'Nombre de la clave actualizado con éxito', user: user });
+  } catch (err) {
+    console.error('Error al actualizar el nombre de la clave en los datos del usuario:', err);
+    res.status(500).json({ error: 'Error al actualizar el nombre de la clave en los datos del usuario' });
+  }
+});
 
 // Iniciar el servidor
 const PORT = 2000;

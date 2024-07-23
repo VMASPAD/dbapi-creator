@@ -1,22 +1,6 @@
-"use client";
-
-import * as React from "react";
+import React, { useState, useEffect } from 'react';
 import { Check, ChevronsUpDown, Edit, Trash } from "lucide-react";
-
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -29,207 +13,154 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function AddBadges() {
-  const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState("");
-  const [frameworks, setFrameworks] = React.useState([]);
-  const [editIndex, setEditIndex] = React.useState(-1);
-  const [editValue, setEditValue] = React.useState("");
-  const [editLabel, setEditLabel] = React.useState("");
-  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
-
   const { toast } = useToast();
+  const [badges, setBadges] = useState([]);
+  const [newBadge, setNewBadge] = useState({ name: '', value: '' });
+  const [editingIndex, setEditingIndex] = useState(-1);
 
-  // Obtener los datos del localStorage cada vez que se actualizan
-  React.useEffect(() => {
-    const storedFrameworks = JSON.parse(localStorage.getItem("types")) || [];
-    setFrameworks(storedFrameworks);
+  useEffect(() => {
+    const storedBadges = JSON.parse(localStorage.getItem("badges")) || [];
+    setBadges(storedBadges);
   }, []);
 
-  const getDataBadge = () => {
-    const nameBadge = document.getElementById("nameBadge").value;
-    const valueBadge = document.getElementById("valueBadge").value;
+  useEffect(() => {
+    localStorage.setItem("badges", JSON.stringify(badges));
+  }, [badges]);
 
-    let types = JSON.parse(localStorage.getItem("types")) || [];
-
-    const newType = {
-      value: valueBadge,
-      label: nameBadge,
-    };
-
-    types.push(newType);
-    localStorage.setItem("types", JSON.stringify(types));
-    setFrameworks(types);
+  const addBadge = () => {
+    if (newBadge.name && newBadge.value) {
+      setBadges([...badges, { ...newBadge, active: true }]);
+      setNewBadge({ name: '', value: '' });
+      toast({
+        title: "Badge added",
+        description: "Your new badge has been added successfully.",
+      });
+    }
   };
 
-  const editDataBadge = () => {
-    let types = JSON.parse(localStorage.getItem("types")) || [];
-
-    types[editIndex] = {
-      value: editValue,
-      label: editLabel,
-    };
-
-    localStorage.setItem("types", JSON.stringify(types));
-    setFrameworks(types);
-    setEditIndex(-1);
-    setEditValue("");
-    setEditLabel("");
+  const toggleBadge = (index) => {
+    const updatedBadges = badges.map((badge, i) => 
+      i === index ? { ...badge, active: !badge.active } : badge
+    );
+    setBadges(updatedBadges);
   };
 
-  const removeDataBadge = (index) => {
-    let types = JSON.parse(localStorage.getItem("types")) || [];
-    types.splice(index, 1);
-    localStorage.setItem("types", JSON.stringify(types));
-    setFrameworks(types);
+  const startEditing = (index) => {
+    setEditingIndex(index);
+  };
+
+  const saveEdit = (index, field, value) => {
+    const updatedBadges = badges.map((badge, i) => 
+      i === index ? { ...badge, [field]: value } : badge
+    );
+    setBadges(updatedBadges);
+    setEditingIndex(-1);
+  };
+
+  const deleteBadge = (index) => {
+    const updatedBadges = badges.filter((_, i) => i !== index);
+    setBadges(updatedBadges);
+    toast({
+      title: "Badge deleted",
+      description: "The badge has been removed.",
+    });
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-[200px] justify-between"
-        >
-          {value
-            ? frameworks.find((framework) => framework.value === value)?.label
-            : "Select badge"}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder="Select badge" />
-          <CommandGroup>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline">Create Badge</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Create Badge</DialogTitle>
-                  <DialogDescription>Create Badge</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="nameBadge" className="text-right">
-                      Name
-                    </Label>
-                    <Input id="nameBadge" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="valueBadge" className="text-right">
-                      Value
-                    </Label>
-                    <Input id="valueBadge" className="col-span-3" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="submit"
-                    onClick={() => {
-                      getDataBadge();
-                      toast({
-                        title: "Badge Saved!",
-                        description: "Badge Saved Succesfully!",
-                      });
-                    }}
-                  >
-                    Save changes
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            {frameworks.length > 0 ? (
-              frameworks.map((framework, index) => (
-                <CommandItem
-                  key={framework.value}
-                  value={framework.value}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === framework.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {framework.label}
-                  <Edit
-  className="ml-2 h-4 w-4 cursor-pointer"
-  onClick={() => {
-    setEditIndex(index);
-    setEditValue(framework.value);
-    setEditLabel(framework.label);
-    setEditDialogOpen(true); // Abre el diálogo de edición
-  }}
-/>
-
-                  <Trash
-                    className="ml-2 h-4 w-4 cursor-pointer"
-                    onClick={() => removeDataBadge(index)}
-                  />
-                </CommandItem>
-              ))
-            ) : (
-              <p>Not Badges</p>
-            )}
-          </CommandGroup>
-        </Command>
-        {editIndex !== -1 && (
-          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Edit Badge</DialogTitle>
-                <DialogDescription>Edit Badge</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="editLabel" className="text-right">
-                    Name
-                  </Label>
+    <>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button>Add New Badge</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create your badge</DialogTitle>
+            <DialogDescription>
+              <Input 
+                placeholder="Name" 
+                value={newBadge.name}
+                onChange={(e) => setNewBadge({...newBadge, name: e.target.value})}
+              />
+              <Input 
+                placeholder="Value" 
+                value={newBadge.value}
+                onChange={(e) => setNewBadge({...newBadge, value: e.target.value})}
+              />
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={addBadge}>Add Badge</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <ScrollArea className="h-96 w-auto rounded-md border p-4">
+      <Table>
+        <TableCaption>Your Badges</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Active</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Value</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {badges.map((badge, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <Checkbox
+                  checked={badge.active}
+                  onCheckedChange={() => toggleBadge(index)}
+                />
+              </TableCell>
+              <TableCell>
+                {editingIndex === index ? (
                   <Input
-                    id="editLabel"
-                    className="col-span-3"
-                    value={editLabel}
-                    onChange={(e) => setEditLabel(e.target.value)}
+                    value={badge.name}
+                    onChange={(e) => saveEdit(index, 'name', e.target.value)}
+                    onBlur={() => setEditingIndex(-1)}
+                    autoFocus
                   />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="editValue" className="text-right">
-                    Value
-                  </Label>
+                ) : (
+                  <span onClick={() => startEditing(index)}>{badge.name}</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {editingIndex === index ? (
                   <Input
-                    id="editValue"
-                    className="col-span-3"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
+                    value={badge.value}
+                    onChange={(e) => saveEdit(index, 'value', e.target.value)}
+                    onBlur={() => setEditingIndex(-1)}
                   />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={() => {
-                    editDataBadge();
-                    toast({
-                      title: "Badge Edited!",
-                      description: "Badge Edited Succesfully!",
-                    });
-                  }}
-                >
-                  Save changes
+                ) : (
+                  <span onClick={() => startEditing(index)}>{badge.value}</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <Button variant="ghost" size="icon" onClick={() => deleteBadge(index)}>
+                  <Trash className="h-4 w-4" />
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      </PopoverContent>
-    </Popover>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      </ScrollArea>
+    </>
   );
 }
+
+export default AddBadges;

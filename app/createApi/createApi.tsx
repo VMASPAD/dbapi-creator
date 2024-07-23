@@ -52,7 +52,7 @@ export default function CreateApi({email}) {
   const [selectedValue, setSelectedValue] = React.useState("");
 
   React.useEffect(() => {
-    const getBadges = JSON.parse(localStorage.getItem("types"));
+    const getBadges = JSON.parse(localStorage.getItem("badges"));
     console.log(getBadges);
     const email = localStorage.getItem("emailtemp");
     setBadge(getBadges);
@@ -78,7 +78,7 @@ export default function CreateApi({email}) {
   const getAllData = async () => {
     const name = document.getElementById("name").value;
     const description = document.getElementById("description").value;
-    const getBadges = JSON.parse(localStorage.getItem("types"));
+    const getBadges = JSON.parse(localStorage.getItem("badges"));
     const data = {
       idData: generateUniqueId(),
       img: await imageData,
@@ -136,9 +136,9 @@ export default function CreateApi({email}) {
     }
   };
   return (
-    <section className="flex flex-col justify-center items-center">
+    <section className="flex flex-col justify-center items-center w-[50rem]">
 
-<Card className="w-[350px]">
+<Card className="w-[-webkit-fill-available]">
       <CardHeader>
         <CardTitle>Create Product, {email}</CardTitle>
         <CardDescription>Add Product to your API.</CardDescription>
@@ -177,7 +177,7 @@ export default function CreateApi({email}) {
         </form>
         <Label htmlFor="badges">Badges</Label>
         <div>
-          {badge.length > 0 ? (
+          {badge?.length > 0 ? (
             badge.map((badges) => (
               <Badge variant="outline">{badges.value}</Badge>
             ))
@@ -187,25 +187,23 @@ export default function CreateApi({email}) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button onClick={getAllData}>Create</Button>
+        <Button onClick={getAllData}>Create Object</Button>
 
         <AlertDialog>
           <AlertDialogTrigger>
-            <Button variant={"ghost"}>Describe your product</Button>
+            <Button variant={"ghost"}>Create Badges</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Describe your product</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
+                Create a features to your product (Actual)
               </AlertDialogDescription>
               <AddBadges />
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction>Add</AlertDialogAction>
-            </AlertDialogFooter>
+      <AlertDialogCancel>Exit</AlertDialogCancel>
+    </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </CardFooter>
@@ -232,7 +230,7 @@ const ImageUploader = ({ handleData }) => {
     }
   };
   return (
-    <div>
+    <div className="flex flex-col justify-center items-center">
       <Input
         type="file"
         accept="image/*"

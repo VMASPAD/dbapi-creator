@@ -51,7 +51,7 @@ function CreateDb() {
     <section className="flex justify-center h-screen items-center">
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Create project</CardTitle>
+        <CardTitle>Create DB</CardTitle>
         <CardDescription>Deploy your new project in one-click.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -71,7 +71,7 @@ function CreateDb() {
         </form>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline">Cancel</Button>
+        <Button variant="outline" onClick={() => router.push('/dashboard')}>Dashboard</Button>
         <Button onClick={handleDeploy}>Deploy</Button> {/* Manejar el click del botón para desplegar el array */}
       </CardFooter>
     </Card>
