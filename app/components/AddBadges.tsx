@@ -30,6 +30,8 @@ export function AddBadges() {
   const [badges, setBadges] = useState([]);
   const [newBadge, setNewBadge] = useState({ name: '', value: '' });
   const [editingIndex, setEditingIndex] = useState(-1);
+  const [editingField, setEditingField] = useState(null);
+  const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
     const storedBadges = JSON.parse(localStorage.getItem("badges")) || [];
@@ -42,12 +44,12 @@ export function AddBadges() {
 
   const addBadge = () => {
     if (newBadge.name && newBadge.value) {
-      setBadges([...badges, { ...newBadge, active: true }]);
-      setNewBadge({ name: '', value: '' });
       toast({
         title: "Badge added",
         description: "Your new badge has been added successfully.",
       });
+      setBadges([...badges, { ...newBadge, active: true }]);
+      setNewBadge({ name: '', value: '' });
     }
   };
 
@@ -58,16 +60,27 @@ export function AddBadges() {
     setBadges(updatedBadges);
   };
 
-  const startEditing = (index) => {
+  const startEditing = (index, field) => {
     setEditingIndex(index);
+    setEditingField(field);
+    setEditValue(badges[index][field]);
   };
 
-  const saveEdit = (index, field, value) => {
-    const updatedBadges = badges.map((badge, i) => 
-      i === index ? { ...badge, [field]: value } : badge
-    );
-    setBadges(updatedBadges);
-    setEditingIndex(-1);
+  const saveEdit = () => {
+    if (editingIndex !== -1 && editingField) {
+      const updatedBadges = badges.map((badge, i) => 
+        i === editingIndex ? { ...badge, [editingField]: editValue } : badge
+      );
+      setBadges(updatedBadges);
+      setEditingIndex(-1);
+      setEditingField(null);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      saveEdit();
+    }
   };
 
   const deleteBadge = (index) => {
@@ -127,26 +140,31 @@ export function AddBadges() {
                 />
               </TableCell>
               <TableCell>
-                {editingIndex === index ? (
+                {editingIndex === index && editingField === 'name' ? (
                   <Input
-                    value={badge.name}
-                    onChange={(e) => saveEdit(index, 'name', e.target.value)}
-                    onBlur={() => setEditingIndex(-1)}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={saveEdit}
+                    onKeyPress={handleKeyPress}
                     autoFocus
                   />
                 ) : (
-                  <span onClick={() => startEditing(index)}>{badge.name}</span>
+                  <span onClick={() => startEditing(index, 'name')}>{badge.name}</span>
                 )}
               </TableCell>
               <TableCell>
-                {editingIndex === index ? (
+                {editingIndex === index && editingField === 'value' ? (
                   <Input
-                    value={badge.value}
-                    onChange={(e) => saveEdit(index, 'value', e.target.value)}
-                    onBlur={() => setEditingIndex(-1)}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={saveEdit}
+                    onKeyPress={handleKeyPress}
+                    autoFocus
                   />
                 ) : (
-                  <span onClick={() => startEditing(index)}>{badge.value}</span>
+                  <span onClick={() => startEditing(index, 'value')}>
+                    {badge.value.length > 20 ? badge.value.substring(0, 20) + ' ...' : badge.value}
+                  </span>
                 )}
               </TableCell>
               <TableCell>

@@ -279,9 +279,8 @@ const changeApiDb = async  (oldkey: string) => {
             </div>
           </DrawerHeader>
           <DrawerFooter>
-            <Button>Submit</Button>
             <DrawerClose>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline">Close</Button>
             </DrawerClose>
           </DrawerFooter>
         </DrawerContent>

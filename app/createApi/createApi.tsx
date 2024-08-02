@@ -45,7 +45,9 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { AddBadges } from "../components/AddBadges";
 
+import { useToast } from "@/components/ui/use-toast";
 export default function CreateApi({email}) {
+  const { toast } = useToast();
   const [badge, setBadge] = React.useState([]);
   const [imageData, setImageData] = React.useState([]);
   const [userData, setUserData] = React.useState(null);
@@ -81,7 +83,7 @@ export default function CreateApi({email}) {
     const getBadges = JSON.parse(localStorage.getItem("badges"));
     const data = {
       idData: generateUniqueId(),
-      img: await imageData,
+      imgBase64: await imageData,
       name: name,
       description: description,
       getFramework: selectedValue,
@@ -101,8 +103,17 @@ export default function CreateApi({email}) {
   
       if (response.ok) {
         console.log("Datos guardados correctamente");
+        
+      toast({
+        title: "Saved data sucessfully",
+        description: "Your new product has been added successfully.",
+      });
       } else {
-        console.error("Error al guardar los datos",);
+        console.error("Error al guardar los datos" + await response.text());
+        toast({
+          title: "Error",
+          description: "See the console." + `Error: ${response.status}`,
+        });
       }
     } catch (error) {
       console.error("Error al enviar la solicitud:", error);
@@ -179,7 +190,7 @@ export default function CreateApi({email}) {
         <div>
           {badge?.length > 0 ? (
             badge.map((badges) => (
-              <Badge variant="outline">{badges.value}</Badge>
+              <Badge variant="outline">{badges.name}</Badge>
             ))
           ) : (
             <p>Not Badges</p>
