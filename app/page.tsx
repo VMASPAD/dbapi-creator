@@ -58,6 +58,7 @@ export default function Home() {
 
     const emailInput = document.getElementById('email').value;
     const passwordInput = document.getElementById('password').value;
+    localStorage.setItem("emailtemp",emailInput)
     localStorage.removeItem("emailtemp")
     localStorage.setItem("emailtemp",emailInput)
 

@@ -1,12 +1,13 @@
-// Importar los módulos necesarios
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const crypto = require('crypto');
+const { Readable } = require('stream');
+const path = require('path');
 
-// Crear una aplicación de Express
 const app = express();
-const users = [];
+
 // Configurar body-parser para analizar las solicitudes JSON
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -15,17 +16,23 @@ app.use(express.json());
 // Habilitar CORS
 app.use(cors());
 
+const mongodbUri = 'mongodb://localhost:27017/dbapi';
 // Conectar a la base de datos MongoDB
-mongoose.connect('mongodb://localhost:27017/dbapi', {
+mongoose.connect(mongodbUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-})
-  .then(() => {
-    console.log('Conexión exitosa a MongoDB');
-  })
-  .catch(err => {
-    console.error('Error al conectar a MongoDB:', err);
+});
+
+const conn = mongoose.connection;
+
+// Inicializar el bucket de GridFS
+let bucket;
+conn.once('open', () => {
+  bucket = new mongoose.mongo.GridFSBucket(conn.db, {
+    bucketName: 'uploads'
   });
+  console.log('Conexión exitosa a MongoDB y GridFS inicializado');
+});
 
 // Definir el esquema de datos para la colección de usuarios
 const userSchema = new mongoose.Schema({
@@ -34,6 +41,129 @@ const userSchema = new mongoose.Schema({
   data: {}
 });
 const User = mongoose.model('User', userSchema);
+
+// Endpoint para subir y guardar datos
+app.post('/api/data/content-array', async (req, res) => {
+  try {
+    const userEmail = req.headers['email'];
+    const userFramework = req.headers['framework'];
+    const { imgBase64, name, description, getBadges, getFramework, idData } = req.body;
+
+    if (!userEmail) {
+      return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
+    }
+
+    if (!userFramework || !name || !description || !getBadges || !getFramework || !idData) {
+      return res.status(400).json({ error: 'Datos insuficientes para agregar contenido' });
+    }
+
+    // Verifica que se hayan proporcionado las imágenes en base64
+    if (!Array.isArray(imgBase64) || imgBase64.length === 0) {
+      return res.status(400).json({ error: 'No se han proporcionado imágenes en formato base64' });
+    }
+
+    // Almacenar los IDs de las imágenes subidas
+    const imgIds = [];
+
+    for (let base64Img of imgBase64) {
+      // Convertir base64 a buffer
+      const imgBuffer = Buffer.from(base64Img, 'base64');
+
+      // Generar un nombre de archivo único
+      const filename = `${crypto.randomBytes(16).toString('hex')}.png`; // Ajusta la extensión según el tipo de imagen
+
+      // Crear un stream de lectura a partir del buffer
+      const readableStream = new Readable();
+      readableStream.push(imgBuffer);
+      readableStream.push(null); // Indicar el final del stream
+
+      // Subir el archivo a GridFS
+      const uploadStream = bucket.openUploadStream(filename, {
+        contentType: 'image/png' // Ajusta el tipo de contenido según el tipo de imagen
+      });
+
+      await new Promise((resolve, reject) => {
+        readableStream.pipe(uploadStream)
+          .on('error', (err) => {
+            console.error('Error al subir la imagen a GridFS:', err);
+            reject('Error al subir la imagen');
+          })
+          .on('finish', () => {
+            imgIds.push(uploadStream.id.toString()); // Guardar el ID del archivo en GridFS
+            resolve();
+          });
+      });
+    }
+
+    // Estructura de datos a almacenar
+    const contentData = {
+      idData,
+      img: imgIds, // Almacenar todos los IDs de las imágenes
+      name,
+      description,
+      getFramework,
+      getBadges: JSON.stringify(getBadges) // Asegurarse de que getBadges sea un array de objetos
+    };
+
+    // Actualizar el documento de usuario directamente en la base de datos
+    const updatedUser = await User.findOneAndUpdate(
+      { email: userEmail },
+      { $push: { [`data.${userFramework}`]: contentData } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    res.status(201).json({ message: `Contenido agregado correctamente al framework "${userFramework}"`, fileIds: imgIds });
+  } catch (error) {
+    console.error('Error al agregar contenido:', error);
+    res.status(500).json({ error: 'Error al agregar contenido' });
+  }
+});
+
+
+// Ruta para obtener imagen en base64
+app.get('/image/:filename', (req, res) => {
+  bucket.find({ filename: req.params.filename }).toArray((err, files) => {
+    if (!files || files.length === 0) {
+      return res.status(404).json({
+        err: 'No file exists'
+      });
+    }
+    
+    const file = files[0];
+    if (file.contentType === 'image/jpeg' || file.contentType === 'image/png') {
+      // Crear un stream de lectura
+      const readstream = bucket.openDownloadStream(file._id);
+      
+      // Convertir el stream a base64
+      let base64Image = '';
+      readstream.on('data', (chunk) => {
+        base64Image += chunk.toString('base64');
+      });
+      
+      readstream.on('end', () => {
+        res.json({
+          filename: file.filename,
+          contentType: file.contentType,
+          size: file.length,
+          uploadDate: file.uploadDate,
+          image: `data:${file.contentType};base64,${base64Image}`
+        });
+      });
+      
+      readstream.on('error', (err) => {
+        res.status(500).json({ err: 'Error al leer el archivo' });
+      });
+    } else {
+      res.status(404).json({
+        err: 'No es una imagen'
+      });
+    }
+  });
+});
 
 // Definir la ruta POST para registrar un nuevo usuario
 app.post('/api/auth/register', async (req, res) => {
@@ -138,37 +268,7 @@ app.get('/api/user-data', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener los datos del usuario' });
   }
 });
-app.post('/api/data/content-array', async (req, res) => {
-  try {
-    const userEmail = req.headers['email'];
-    const userFramework = req.headers['framework'];
-    if (!userEmail) {
-      return res.status(400).json({ error: 'No se proporcionó el correo electrónico' });
-    }
 
-    // Verificar si el framework existe en el objeto `data`
-    if (!req.body || !req.body.img || !req.body.name || !req.body.description || !req.body.getBadges || !req.body.getFramework || !req.body.idData) {
-      return res.status(400).json({ error: 'Datos insuficientes para agregar contenido' });
-    }
-    // Actualizar el documento de usuario directamente en la base de datos
-    const updatedUser = await User.findOneAndUpdate(
-      { email: userEmail },
-      { $push: { [`data.${userFramework}`]: req.body } },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
-
-    console.log(updatedUser.data[userFramework]);
-
-    res.status(201).json({ message: `Contenido agregado correctamente al framework "${userFramework}"` });
-  } catch (error) {
-    console.error('Error al agregar contenido:', error);
-    res.status(500).json({ error: 'Error al agregar contenido' });
-  }
-});
 
 app.get('/api/user', async (req, res) => {
   try {
@@ -246,7 +346,54 @@ app.put('/api/userdata', async (req, res) => {
   }
 });
 
+app.put('/api/changeApiDb', async (req, res) => {
+  try {
+    const userEmail = req.headers['email'];
+    const userId = req.headers['id'];
+    const oldKey = req.headers['oldkey'];
+    const newKey = req.headers['newkey'];
 
+    if (!userEmail || !userId || !oldKey || !newKey) {
+      return res.status(400).json({ error: 'No se proporcionaron todos los datos necesarios' });
+    }
+
+    // Validar que el ID sea un ObjectId válido
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'ID de usuario no válido' });
+    }
+
+    // Buscar el usuario en la base de datos usando las credenciales proporcionadas
+    const user = await User.findOne({ email: userEmail, _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Verificar si la clave antigua existe en el objeto data
+    if (!user.data || !user.data.hasOwnProperty(oldKey)) {
+      return res.status(404).json({ error: 'La clave especificada no existe en los datos del usuario' });
+    }
+
+    // Crear un nuevo objeto con la clave actualizada
+    const updatedData = {};
+    for (let key in user.data) {
+      if (key === oldKey) {
+        updatedData[newKey] = user.data[key];
+      } else {
+        updatedData[key] = user.data[key];
+      }
+    }
+
+    // Actualizar el objeto data del usuario
+    user.data = updatedData;
+    await user.save();
+
+    // Devolver el usuario actualizado en la respuesta
+    res.json({ message: 'Nombre de la clave actualizado con éxito', user: user });
+  } catch (err) {
+    console.error('Error al actualizar el nombre de la clave en los datos del usuario:', err);
+    res.status(500).json({ error: 'Error al actualizar el nombre de la clave en los datos del usuario' });
+  }
+});
 
 // Iniciar el servidor
 const PORT = 2000;

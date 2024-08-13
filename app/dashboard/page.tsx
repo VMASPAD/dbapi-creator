@@ -52,7 +52,8 @@ function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const userDataResponse = await getUserData("vmcodeta@gmail.com");
+      const email = localStorage.getItem("emailtemp");
+      const userDataResponse = await getUserData(email);
       setUserData(userDataResponse);
       setApiData(userDataResponse);
       setIsLoading(false);

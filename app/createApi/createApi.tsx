@@ -136,6 +136,7 @@ export default function CreateApi({email}) {
     }
   };
   return (
+<div className="flex justify-center">
     <Card className="w-[350px]">
       <CardHeader>
         <CardTitle>Create Product, {email}</CardTitle>
@@ -207,6 +208,7 @@ export default function CreateApi({email}) {
         </AlertDialog>
       </CardFooter>
     </Card>
+    </div>
   );
 }
 
