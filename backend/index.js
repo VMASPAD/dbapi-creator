@@ -16,7 +16,7 @@ app.use(express.json());
 // Habilitar CORS
 app.use(cors());
 
-const mongodbUri = 'mongodb://localhost:27017/dbapi';
+const mongodbUri = 'mongodb+srv://aspad:aspad@dbapi.2haib.mongodb.net/';
 // Conectar a la base de datos MongoDB
 mongoose.connect(mongodbUri, {
   useNewUrlParser: true,
