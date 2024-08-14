@@ -16,7 +16,7 @@ app.use(express.json());
 // Habilitar CORS
 app.use(cors());
 
-const mongodbUri = 'mongodb+srv://aspad:aspad@dbapi.2haib.mongodb.net/';
+const mongodbUri = 'mongodb://localhost:27017/dbapi';
 // Conectar a la base de datos MongoDB
 mongoose.connect(mongodbUri, {
   useNewUrlParser: true,
@@ -102,7 +102,7 @@ app.post('/api/data/content-array', async (req, res) => {
       name,
       description,
       getFramework,
-      getBadges: JSON.stringify(getBadges) // Asegurarse de que getBadges sea un array de objetos
+      getBadges: getBadges // Asegurarse de que getBadges sea un array de objetos
     };
 
     // Actualizar el documento de usuario directamente en la base de datos
