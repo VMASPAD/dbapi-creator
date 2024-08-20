@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# DBAPI
+
+DBAPI is a web application designed to simplify the process of creating and managing APIs for your database content. It allows users to easily add, edit, and store data in a structured manner, making it an ideal tool for developers looking to streamline their project workflows.
+
+## Features
+
+- **User Authentication**: Secure login and registration functionality to ensure that only authorized users can access and modify their APIs.
+- **Dynamic API Management**: Users can create new databases (DBs), add content to them, and edit existing content with ease.
+- **Image Upload**: Supports uploading images as part of the content, storing them in base64 format.
+- **Framework Selection**: Allows users to specify the framework associated with each piece of content, facilitating integration with various development environments.
+- **Badge System**: Users can assign badges to their content, enhancing organization and categorization.
 
 ## Getting Started
 
-First, run the development server:
+To get started with DBAPI, follow these steps:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. **Install Dependencies**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Navigate to the project directory and install the necessary dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+cd dbapi npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-## Learn More
+2. **Start the Backend Server**
 
-To learn more about Next.js, take a look at the following resources:
+Ensure MongoDB is running on your system. Then, start the backend server:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+cd backend npm start
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+This will start the server on `http://localhost:2000`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Run the Frontend Application**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Open a new terminal window, navigate to the `app` directory, and start the frontend application:
+
+cd app npm start
+
+
+This will launch the application on `http://localhost:3000`.
+
+## Usage
+
+- **Register/Login**: Start by registering a new account or logging in with existing credentials.
+- **Create DB**: Once logged in, you can create a new database by specifying a name for it.
+- **Add Content**: Add new content to your database by filling out the form with the name, description, and selecting the appropriate framework. You can also upload images and assign badges to your content.
+- **Edit Content**: Existing content can be edited or moved to a different framework as needed.
+
+## Technologies
+
+DBAPI is built using the following technologies:
+
+- **Frontend**: React.js
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB
+- **Authentication**: Custom implementation with email and password
+- **Image Storage**: Images are stored in base64 format within MongoDB
+
+## Contributing
+
+Contributions are welcome! If you have any suggestions for new features or improvements, feel free to open an issue or submit a pull request.
+
+## License
+
+DBAPI is open-source software licensed under the MIT license.
