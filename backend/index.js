@@ -102,7 +102,7 @@ app.post('/api/data/content-array', async (req, res) => {
       name,
       description,
       getFramework,
-      getBadges: JSON.stringify(getBadges) // Asegurarse de que getBadges sea un array de objetos
+      getBadges: getBadges // Asegurarse de que getBadges sea un array de objetos
     };
 
     // Actualizar el documento de usuario directamente en la base de datos

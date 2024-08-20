@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import * as React from "react";
@@ -45,14 +46,16 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { AddBadges } from "../components/AddBadges";
 
+import { useToast } from "@/components/ui/use-toast";
 export default function CreateApi({email}) {
+  const { toast } = useToast();
   const [badge, setBadge] = React.useState([]);
   const [imageData, setImageData] = React.useState([]);
   const [userData, setUserData] = React.useState(null);
   const [selectedValue, setSelectedValue] = React.useState("");
 
   React.useEffect(() => {
-    const getBadges = JSON.parse(localStorage.getItem("types"));
+    const getBadges = JSON.parse(localStorage.getItem("badges"));
     console.log(getBadges);
     const email = localStorage.getItem("emailtemp");
     setBadge(getBadges);
@@ -78,10 +81,10 @@ export default function CreateApi({email}) {
   const getAllData = async () => {
     const name = document.getElementById("name").value;
     const description = document.getElementById("description").value;
-    const getBadges = JSON.parse(localStorage.getItem("types"));
+    const getBadges = JSON.parse(localStorage.getItem("badges"));
     const data = {
       idData: generateUniqueId(),
-      img: await imageData,
+      imgBase64: await imageData,
       name: name,
       description: description,
       getFramework: selectedValue,
@@ -101,8 +104,17 @@ export default function CreateApi({email}) {
   
       if (response.ok) {
         console.log("Datos guardados correctamente");
+        
+      toast({
+        title: "Saved data sucessfully",
+        description: "Your new product has been added successfully.",
+      });
       } else {
-        console.error("Error al guardar los datos",);
+        console.error("Error al guardar los datos" + await response.text());
+        toast({
+          title: "Error",
+          description: "See the console." + `Error: ${response.status}`,
+        });
       }
     } catch (error) {
       console.error("Error al enviar la solicitud:", error);
@@ -136,14 +148,16 @@ export default function CreateApi({email}) {
     }
   };
   return (
-<div className="flex justify-center">
-    <Card className="w-[350px]">
+    <section className="flex flex-col justify-center items-center w-[50rem]">
+
+<Card className="w-[-webkit-fill-available]">
       <CardHeader>
         <CardTitle>Create Product, {email}</CardTitle>
         <CardDescription>Add Product to your API.</CardDescription>
       </CardHeader>
       <CardContent>
         <ImageUploader handleData={handleData} />
+        <br></br>
         <form>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
@@ -175,9 +189,9 @@ export default function CreateApi({email}) {
         </form>
         <Label htmlFor="badges">Badges</Label>
         <div>
-          {badge.length > 0 ? (
+          {badge?.length > 0 ? (
             badge.map((badges) => (
-              <Badge variant="outline">{badges.value}</Badge>
+              <Badge variant="outline" key={badges.name}>{badges.name}</Badge>
             ))
           ) : (
             <p>Not Badges</p>
@@ -185,30 +199,28 @@ export default function CreateApi({email}) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button onClick={getAllData}>Create</Button>
+        <Button onClick={getAllData}>Create Object</Button>
 
         <AlertDialog>
           <AlertDialogTrigger>
-            <Button variant={"ghost"}>Describe your product</Button>
+            <Button variant={"ghost"}>Create Badges</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Describe your product</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
+                Create a features to your product (Actual)
               </AlertDialogDescription>
               <AddBadges />
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction>Add</AlertDialogAction>
-            </AlertDialogFooter>
+      <AlertDialogCancel>Exit</AlertDialogCancel>
+    </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </CardFooter>
     </Card>
-    </div>
+    </section>
   );
 }
 
@@ -230,7 +242,7 @@ const ImageUploader = ({ handleData }) => {
     }
   };
   return (
-    <div>
+    <div className="flex flex-col justify-center items-center">
       <Input
         type="file"
         accept="image/*"

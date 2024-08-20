@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import * as React from "react"
 import { useRouter } from 'next/navigation';
@@ -13,6 +14,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link";
+import { appDir, resolveResource } from '@tauri-apps/api/path';
+import { Command } from '@tauri-apps/api/shell';
 
 export default function Home() {
   const [email, setEmail] = React.useState('');

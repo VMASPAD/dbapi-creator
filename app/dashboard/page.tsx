@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import React, { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -40,11 +41,13 @@ import CreateApi from "../createApi/createApi";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { getUserData } from "./getUserData";
+import { getCookieData, getUserData } from "./getUserData";
 import { putUserEdit } from "./putUserEdit";
 import SelectWrapper from "./SelectWrapper";
+import { useToast } from "@/components/ui/use-toast";
 
 function Dashboard() {
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [apiData, setApiData] = useState(null);
@@ -52,7 +55,7 @@ function Dashboard() {
 
   const fetchData = async () => {
     try {
-      const email = localStorage.getItem("emailtemp");
+      const email = localStorage.getItem("emailtemp")
       const userDataResponse = await getUserData(email);
       setUserData(userDataResponse);
       setApiData(userDataResponse);
@@ -88,33 +91,42 @@ function Dashboard() {
       itemDescription
     );
   };
-
+  const handleClick = () => {
+    editDataApi();
+    toast({
+      title: "Changed",
+      description: "Reload the webpage to view changes",
+    });
+  };
+const changeApiDb = async  (oldkey: string) => {
+  const dataCookie = await getCookieData()
+  const apiName = (document.getElementById('apiName') as HTMLInputElement).value
+  const response = await fetch("http://localhost:2000/api/changeApiDb", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      'email': `${(await dataCookie).email}`,
+      'id': `${(await dataCookie).id}`,
+      'oldkey': `${oldkey}`,
+      'newkey': `${apiName}`
+    },
+  }); 
+ } 
   return (
-    <div>
+    <div className="flex flex-col justify-center items-center">
       {userData && (
-        <div>
-          <h2>User Data</h2>
+        <><div className="grid grid-cols-4 justify-center justify-items-center items-center">
           <p>Email: {apiData.email}</p>
           <p>id: {apiData._id}</p>
-          <div>
-            <Separator />
-
-            <h2>User Data:</h2>
-            <p>Email: {apiData.email}</p>
-            <p>Password: {apiData.pass}</p>
-            <h3>Data:</h3>
-            <ul></ul>
-          </div>
-        </div>
-      )}
+          <a href="/createDb">Create new DB</a>
       <Drawer>
         <DrawerTrigger>
           <Button variant={"ghost"}>View Apis</Button>
         </DrawerTrigger>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Your Lists</DrawerTitle>
-            <DrawerDescription>List.</DrawerDescription>
+            <DrawerTitle>Your DBs</DrawerTitle>
+            <DrawerDescription>Edit your DBs and products.</DrawerDescription>
             <div className="grid justify-items-center">
               <Carousel className="w-full max-w-xs">
                 <CarouselContent>
@@ -138,16 +150,18 @@ function Dashboard() {
                                   <Sheet>
                                     <SheetTrigger>
                                       <Button key={apiName}>
-                                        Editar: {apiName}
+                                        Editar 
                                       </Button>
                                     </SheetTrigger>
                                     <SheetContent>
                                       <SheetHeader>
                                         <SheetTitle>
-                                          Edita tus productos
+                                          Edit your products
                                         </SheetTitle>
                                         <SheetDescription>
                                           <div className="flex flex-col gap-5">
+                                            <Input id="apiName" placeholder={apiName}/>
+                                            <Button onClick={() => changeApiDb(apiName)}>Change</Button>
                                             {apiData.map((item, index) => (
                                               <Sheet key={index}>
                                                 <SheetTrigger>
@@ -161,8 +175,7 @@ function Dashboard() {
                                                     <SheetDescription>
                                                       <div>
                                                         <Label key={item.name}>
-                                                          Name:{" "}
-                                                          {item.description}
+                                                          Name:{" "} 
                                                         </Label>
                                                         <Input
                                                           placeholder={
@@ -175,8 +188,7 @@ function Dashboard() {
                                                         <Label
                                                           key={item.description}
                                                         >
-                                                          Descripción:
-                                                          {item.description}
+                                                          Descripción: 
                                                         </Label>
                                                         <Input
                                                           placeholder={
@@ -199,19 +211,7 @@ function Dashboard() {
                                                         >
                                                           {item.getFramework}
                                                         </Label>
-                                                        <br />
-                                                        <p>
-                                                          Badges:
-                                                          {item.getBadges.map(
-                                                            (badge, index) => (
-                                                              <Badge
-                                                                key={index}
-                                                              >
-                                                                {badge.label}
-                                                              </Badge>
-                                                            )
-                                                          )}
-                                                        </p>
+                                                        <br /> 
                                                         <SelectWrapper onSelectedValueChange={handleSelectedValueChange}>
                                                         {({ selectedValue, handleSelectChange }) => (
                                                         <Select
@@ -248,7 +248,7 @@ function Dashboard() {
                                                       </div>
                                                       <br />
                                                       <Button
-                                                        onClick={editDataApi}
+                                                        onClick={handleClick}
                                                       >
                                                         Cambiar
                                                       </Button>
@@ -280,13 +280,15 @@ function Dashboard() {
             </div>
           </DrawerHeader>
           <DrawerFooter>
-            <Button>Submit</Button>
             <DrawerClose>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline">Close</Button>
             </DrawerClose>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+        </div><Separator /></>
+      )}
+      <br />
       <CreateApi email={userData?.email} />
     </div>
   );
